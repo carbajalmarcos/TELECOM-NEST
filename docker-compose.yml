@@ -174,11 +174,6 @@ services:
       dockerfile: Dockerfile.rmq
     volumes:
       - ./rabbitmq:/data
-    healthcheck:
-        test: ["CMD", "curl", "-f", "http://localhost:15672"]
-        interval: 30s
-        timeout: 10s
-        retries: 5
     ports:
       # AMQP PORT
       - "5672:5672"
