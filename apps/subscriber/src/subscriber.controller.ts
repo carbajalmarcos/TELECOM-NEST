@@ -1,8 +1,6 @@
 import { Controller } from '@nestjs/common';
-import { EventPattern } from '@nestjs/microservices';
 import { mtMessageType } from '@telecom/message';
 import { SubscriberService } from './subscriber.service';
-import { Consume, Consumer } from '@enriqcg/nestjs-amqp';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { rmq } from '@telecom/constants';
 
