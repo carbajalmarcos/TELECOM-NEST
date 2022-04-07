@@ -10,6 +10,8 @@
 ```bash
 # It will run builders (apps, libraries) and then docker-compose
 
+npm i -g @nestjs/cli
+
 npm install
 
 sh init.sh
