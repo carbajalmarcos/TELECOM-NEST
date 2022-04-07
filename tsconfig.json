@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "es2017",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@telecom/message": [
+        "libs/message/src"
+      ],
+      "@telecom/message/*": [
+        "libs/message/src/*"
+      ],
+      "@telecom/auth": [
+        "libs/auth/src"
+      ],
+      "@telecom/auth/*": [
+        "libs/auth/src/*"
+      ],
+      "@telecom/numbers": [
+        "libs/numbers/src"
+      ],
+      "@telecom/numbers/*": [
+        "libs/numbers/src/*"
+      ],
+      "@telecom/user": [
+        "libs/user/src"
+      ],
+      "@telecom/user/*": [
+        "libs/user/src/*"
+      ],
+      "@telecom/constants": [
+        "libs/constants/src"
+      ],
+      "@telecom/constants/*": [
+        "libs/constants/src/*"
+      ]
+    }
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/telecom/src",
+  "monorepo": true,
+  "root": "apps/telecom",
+  "compilerOptions": {
+    "webpack": true,
+    "tsConfigPath": "apps/telecom/tsconfig.app.json"
+  },
+  "projects": {
+    "telecom": {
+      "type": "application",
+      "root": "apps/telecom",
+      "entryFile": "main",
+      "sourceRoot": "apps/telecom/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/telecom/tsconfig.app.json"
+      }
+    },
+    "publisher": {
+      "type": "application",
+      "root": "apps/publisher",
+      "entryFile": "main",
+      "sourceRoot": "apps/publisher/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/publisher/tsconfig.app.json"
+      }
+    },
+    "subscriber": {
+      "type": "application",
+      "root": "apps/subscriber",
+      "entryFile": "main",
+      "sourceRoot": "apps/subscriber/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/subscriber/tsconfig.app.json"
+      }
+    },
+    "receive-sms": {
+      "type": "application",
+      "root": "apps/receive-sms",
+      "entryFile": "main",
+      "sourceRoot": "apps/receive-sms/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/receive-sms/tsconfig.app.json"
+      }
+    },
+    "message": {
+      "type": "library",
+      "root": "libs/message",
+      "entryFile": "index",
+      "sourceRoot": "libs/message/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/message/tsconfig.lib.json"
+      }
+    },
+    "auth": {
+      "type": "library",
+      "root": "libs/auth",
+      "entryFile": "index",
+      "sourceRoot": "libs/auth/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/auth/tsconfig.lib.json"
+      }
+    },
+    "numbers": {
+      "type": "library",
+      "root": "libs/numbers",
+      "entryFile": "index",
+      "sourceRoot": "libs/numbers/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/numbers/tsconfig.lib.json"
+      }
+    },
+    "user": {
+      "type": "library",
+      "root": "libs/user",
+      "entryFile": "index",
+      "sourceRoot": "libs/user/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/user/tsconfig.lib.json"
+      }
+    },
+    "db-data-seeder": {
+      "type": "application",
+      "root": "apps/db-data-seeder",
+      "entryFile": "main",
+      "sourceRoot": "apps/db-data-seeder/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/db-data-seeder/tsconfig.app.json"
+      }
+    },
+    "db-backuper": {
+      "type": "application",
+      "root": "apps/db-backuper",
+      "entryFile": "main",
+      "sourceRoot": "apps/db-backuper/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/db-backuper/tsconfig.app.json"
+      }
+    },
+    "constants": {
+      "type": "library",
+      "root": "libs/constants",
+      "entryFile": "index",
+      "sourceRoot": "libs/constants/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/constants/tsconfig.lib.json"
+      }
+    }
+  }
+}
