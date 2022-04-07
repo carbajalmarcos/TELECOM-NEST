@@ -17,7 +17,7 @@ sh init.sh
 
 # Test users
 
-```json
+```sh
  [
     {
       username: 'cero',
