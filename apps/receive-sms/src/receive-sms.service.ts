@@ -1,9 +1,4 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { MessageService, moMessageType, MessageDto } from '@telecom/message';
 import { HttpService } from '@nestjs/axios';
 import { v4 as uuidv4 } from 'uuid';

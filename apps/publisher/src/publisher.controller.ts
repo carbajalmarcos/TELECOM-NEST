@@ -19,7 +19,7 @@ export class PublisherController {
   constructor(
     private usersService: UserService,
     private readonly amqpConnection: AmqpConnection,
-  ) { }
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post('/send')

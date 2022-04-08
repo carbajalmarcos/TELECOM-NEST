@@ -40,7 +40,6 @@ export class AppController {
   @Get('/message/track-id/:id')
   async getMessageByTrackId(@Param() param, @Req() req) {
     const result = await this.messageService.findMessage({ trackId: param.id });
-    console.log('getMessageById :: ', JSON.stringify(result));
     if (!result || Object.keys(result).length === 0) return {};
     const conversation = await this.messageService.findOneConversation(
       result.conversation,

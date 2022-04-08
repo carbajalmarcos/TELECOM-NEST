@@ -12,8 +12,11 @@ import {
   exports: [MessageService],
   imports: [
     MongooseModule.forRoot(
-      // `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@mongodb:27017/${process.env.MESSAGE_DB}?authMechanism=SCRAM-SHA-1&directConnection=true&authSource=authSource=admin`,
-      `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@mongodb:27017/${process.env.MESSAGE_DB}?authSource=admin`,
+      `mongodb://${process.env.DB_USERNAME}:${
+        process.env.DB_PASSWORD
+      }@mongodb:${process.env.MONGO_DB_PORT ?? '27017'}/${
+        process.env.MESSAGE_DB
+      }?authSource=admin`,
       {
         connectionName: 'messages',
         connectionFactory: (connection) => {

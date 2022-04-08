@@ -14,7 +14,7 @@ services:
     tty: true
     restart: on-failure
     ports:
-      - "3000:3000"
+      - "${PUBLISHER_PORT}:3000"
     depends_on:
       - rabbitmq
     networks:
@@ -76,7 +76,7 @@ services:
       target: development
     container_name: endpoints-utils
     ports:
-      - "3010:3010"
+      - "${ENDPOINTS_UTILS_PORT}:3010"
     environment:
       MESSAGE_DB: telecom-message
       DB_USERNAME: username
@@ -85,7 +85,6 @@ services:
     depends_on:
       - mongodb
       - publisher
-      - gateway
       - rabbitmq
     networks:
       - services
@@ -115,7 +114,7 @@ services:
       target: development
     container_name: receive-sms
     ports:
-      - "3001:3001"
+      - "${RECEIVE_SMS_PORT}:3001"
     restart: always
     environment:
       MESSAGE_DB: telecom-message
@@ -154,7 +153,7 @@ services:
     image: mongo:latest
     restart: always
     ports: 
-        - 27017:27017
+        - ${MONGO_DB_PORT}:27017
     environment: 
         MONGO_INITDB_ROOT_USERNAME: username
         MONGO_INITDB_ROOT_PASSWORD: password
@@ -213,15 +212,23 @@ services:
       - services
 
   # NGINX     
-  gateway:
-    container_name: gateway
-    build:
-      context: ./apps/gateway
-    restart: always
-    ports:
-      - 80:8080
-    networks:
-      - services
+  # gateway:
+  #   container_name: gateway
+  #   build:
+  #     context: ./apps/gateway
+  #   restart: always
+  #   ports:
+  #     - ${GATEWAY_PORT}:8080
+  #   depends_on:
+  #     - endpoints-utils
+  #     - receive-sms
+  #     - publisher
+  #   environment:
+  #       PUBLISHER_PORT: ${PUBLISHER_PORT}
+  #       ENDPOINTS_UTILS_PORT: ${ENDPOINTS_UTILS_PORT}
+  #       RECEIVE_SMS_PORT: ${RECEIVE_SMS_PORT}
+  #   networks:
+  #     - services
 
 networks:
   services:

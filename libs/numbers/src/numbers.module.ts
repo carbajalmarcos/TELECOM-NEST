@@ -9,8 +9,11 @@ import { UserNumber, UserNumberSchema } from './schemas/user-number.schema';
   exports: [NumberService],
   imports: [
     MongooseModule.forRoot(
-      // `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@mongodb:27017/?authMechanism=SCRAM-SHA-1&directConnection=true&authSource=${process.env.NUMBERS_DB}`,
-      `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@mongodb:27017/${process.env.NUMBERS_DB}?authSource=admin`,
+      `mongodb://${process.env.DB_USERNAME}:${
+        process.env.DB_PASSWORD
+      }@mongodb:${process.env.MONGO_DB_PORT ?? '27017'}/${
+        process.env.NUMBERS_DB
+      }?authSource=admin`,
       {
         connectionName: 'numbers',
         connectionFactory: (connection) => {
