@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { UserNumberDto } from '@telecom/numbers';
-import { NumberService } from '@telecom/numbers';
+import { UserNumberDto, NumberService, FromNumberDto } from '@telecom/numbers';
+import { rmq } from '@telecom/constants';
 
 @Injectable()
 export class NumberUtils {
@@ -10,7 +10,7 @@ export class NumberUtils {
    * get the origin number
    * @param  {String} user name
    */
-  async getNumber(user: string): Promise<string> {
+  async getNumberForBidirectionalFlow(user: string): Promise<string> {
     try {
       const userNumberResult = await this.numberService.findOneUserNumber({
         user,
@@ -20,15 +20,14 @@ export class NumberUtils {
         const fromNumberResult = await this.numberService.findOneFromNumberById(
           userNumberResult.currentNumber,
         );
-        console.info(
-          `Existent from number ::`,
-          JSON.stringify(fromNumberResult),
-        );
         return fromNumberResult.number;
       }
       // we find one number without assignment
-      const fromNumberResult =
+      let fromNumberResult;
+
+      fromNumberResult =
         await this.numberService.findOneNonAssignedFromNumber();
+      if (!fromNumberResult) fromNumberResult = await this.getFromNumber();
       const userNumberDto = new UserNumberDto();
       userNumberDto.user = user;
       userNumberDto.currentNumber = fromNumberResult.id;
@@ -43,8 +42,49 @@ export class NumberUtils {
       );
       return updateFromNumberResult.number;
     } catch (error) {
-      console.error(`Get number error ::`, error);
       return null;
     }
+  }
+
+  async getNumberForUnidirectionalFlow(): Promise<string> {
+    try {
+      const result = await this.getFromNumber();
+      return result.number;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async getFromNumber(): Promise<FromNumberDto> {
+    const from = new Date();
+    from.setMinutes(from.getMinutes() - 1);
+    const result = await this.numberService.findOneUserNumberRoundRobin(
+      from,
+      rmq.SPAM_LIMIT,
+    );
+    if (!result) return null;
+    const fromNumberDto = new FromNumberDto();
+    fromNumberDto.id = result.id;
+    fromNumberDto.number = fromNumberDto.number;
+    fromNumberDto.sentCount = result.sentCount;
+    // first time, setting sentCount
+    if (!result.sentCount) {
+      fromNumberDto.sentCount = 1;
+    }
+    // sent count is less than spam limit
+    else if (fromNumberDto.sentCount < rmq.SPAM_LIMIT) {
+      fromNumberDto.sentCount = fromNumberDto.sentCount + 1;
+    }
+    // updateAt exceeded one minute
+    else {
+      fromNumberDto.sentCount = 1;
+    }
+    fromNumberDto.updateAt = new Date();
+
+    const updateResult = await this.numberService.updateFromNumber(result.id, {
+      ...fromNumberDto,
+    });
+
+    return updateResult;
   }
 }

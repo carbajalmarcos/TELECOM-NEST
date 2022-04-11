@@ -7,7 +7,7 @@ import {
   ConversationDocument,
 } from './schemas/conversation.schema';
 import { MessageDto } from './dto/message.dto';
-import { ConversationDto } from './dto/conversation.dto';
+import { ConversationDto, SearchConversationDto } from './dto/conversation.dto';
 import { SearchMessageDto } from './dto/message.dto';
 
 @Injectable()
@@ -19,11 +19,14 @@ export class MessageService {
     private readonly conversationModel: Model<ConversationDocument>,
   ) {}
 
-  async findOneConversationByNumbers(
-    conversationNumbers: string[],
+  async findOneConversationByNumbersAndOthers(
+    searchConversationDto: SearchConversationDto,
   ): Promise<Conversation> {
     return await this.conversationModel
-      .findOne({ numbers: { $all: conversationNumbers } })
+      .findOne({
+        numbers: { $all: searchConversationDto.numbers },
+        ...searchConversationDto,
+      })
       .exec();
   }
 
@@ -37,8 +40,11 @@ export class MessageService {
   async createConversation(
     createConversationDto: ConversationDto,
   ): Promise<Conversation> {
-    const exists = await this.findOneConversationByNumbers(
-      createConversationDto.numbers,
+    const searchConversationDto = new SearchConversationDto();
+    searchConversationDto.numbers = createConversationDto.numbers;
+    searchConversationDto.user = createConversationDto.user;
+    const exists = await this.findOneConversationByNumbersAndOthers(
+      searchConversationDto,
     );
     if (exists) return exists;
     return await new this.conversationModel({

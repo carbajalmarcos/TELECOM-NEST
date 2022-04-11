@@ -6,6 +6,7 @@ import {
   MessageDto,
   MessageService,
   mtMessageType,
+  SearchConversationDto,
   toJasminParams,
 } from '@telecom/message';
 import { NumberUtils } from './number-utils';
@@ -20,6 +21,20 @@ export class SubscriberService {
     private readonly numberUtils: NumberUtils, // @Inject(process.env.QUEUE) private readonly queueClient: ClientProxy, // private readonly amqpService: AMQPService,
     private readonly amqpConnection: AmqpConnection,
   ) {}
+
+  private delayPublish(data: mtMessageType) {
+    this.amqpConnection.publish(
+      rmq.EXCHANGE_DELAYED_NAME,
+      process.env.QUEUE,
+      data,
+      {
+        headers: {
+          'x-delay': 60000,
+        },
+      },
+    );
+    console.log('retrying message for spam rule:: ', JSON.stringify(data));
+  }
 
   private paramsBuilder(data: mtMessageType): toJasminParams {
     const params: toJasminParams = {
@@ -61,25 +76,20 @@ export class SubscriberService {
     }
   }
   /**
-   * function checks span rules
+   * function checks spam rules for bidirectional flow
    * @param  {numbers: [string]}
    */
-  private async isSpam(numbers: string[]) {
-    const conversationResult =
-      await this.messageService.findOneConversationByNumbers(numbers);
-    if (!conversationResult) return false;
-    const conversationId = conversationResult.id;
+  private async isSpam(number: string) {
     const to = new Date();
     const from = new Date();
     from.setMinutes(from.getMinutes() - 1);
     const messagesResult =
       await this.messageService.findMessagesByParamsAndDateRange(
-        { conversation: conversationId, isMO: false },
+        { origin: number, isMO: false },
         from,
         to,
       );
-    // TODO: change comparator number to 9 (review the histories)
-    return messagesResult.length > 10;
+    return messagesResult.length > rmq.SPAM_LIMIT;
   }
 
   async sendMessage(data: mtMessageType) {
@@ -88,28 +98,22 @@ export class SubscriberService {
       let jasminError;
       let conversationNumbers;
       try {
-        const number: string = await this.numberUtils.getNumber(data.userId);
-        if (!number)
-          throw new HttpException('number not found', HttpStatus.NOT_FOUND);
+        const number: string = data.allowMO
+          ? await this.numberUtils.getNumberForBidirectionalFlow(data.userId)
+          : await this.numberUtils.getNumberForUnidirectionalFlow();
+        console.log('sendMessage :: number :: ', number);
+        // If number not found then retry
+        if (!number) {
+          console.log('sendMessage :: number 2:: ', number);
+          this.delayPublish(data);
+          return;
+        }
         data.origin = number;
         // getting conversation numbers
         conversationNumbers = [data.origin, data.destination];
-        // spam checking
-        if (await this.isSpam(conversationNumbers)) {
-          this.amqpConnection.publish(
-            rmq.EXCHANGE_DELAYED_NAME,
-            process.env.QUEUE,
-            data,
-            {
-              headers: {
-                'x-delay': rmq.DELAY_MILLISECONDS,
-              },
-            },
-          );
-          console.log(
-            'retrying message for spam rule:: ',
-            JSON.stringify(data),
-          );
+        // spam checking for bidirectional flow
+        if (data.allowMO && (await this.isSpam(conversationNumbers))) {
+          this.delayPublish(data);
           return;
         }
         jasminResponse = await this.sendMessageToJasmin(data);
@@ -117,9 +121,12 @@ export class SubscriberService {
         console.info('Sending jasmin error :: ', err);
         jasminError = err;
       }
+      const searchConversationDto = new SearchConversationDto();
+      searchConversationDto.user = new Types.ObjectId(data.userId);
+      searchConversationDto.numbers = conversationNumbers;
       let conversationResult =
-        await this.messageService.findOneConversationByNumbers(
-          conversationNumbers,
+        await this.messageService.findOneConversationByNumbersAndOthers(
+          searchConversationDto,
         );
 
       const now = new Date();
@@ -128,7 +135,7 @@ export class SubscriberService {
         conversationDto.numbers = conversationNumbers;
         conversationDto.createdAt = now;
         conversationDto.updatedAt = now;
-        conversationDto.user = new Types.ObjectId(data.userId);
+        conversationDto.user = new Types.ObjectId(searchConversationDto.user);
         conversationDto.company = data.company;
         conversationDto.allowMO = data.allowMO;
         conversationResult = await this.messageService.createConversation(

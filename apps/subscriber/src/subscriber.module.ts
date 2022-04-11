@@ -22,7 +22,8 @@ import { rmq } from '@telecom/constants';
           name: rmq.EXCHANGE_DELAYED_NAME,
           type: rmq.EXCHANGE_DELAYED_TYPE,
           options: {
-            arguments: { 'x-delayed-type': 'direct' },
+            durable: true,
+            arguments: { 'x-delayed-type': rmq.EXCHANGE_DIRECT_TYPE },
           },
         },
       ],
@@ -30,6 +31,7 @@ import { rmq } from '@telecom/constants';
       enableControllerDiscovery: true,
       connectionInitOptions: { wait: true, timeout: 20000 },
     }),
+    SubscriberModule,
     MessageModule,
     NumbersModule,
   ],

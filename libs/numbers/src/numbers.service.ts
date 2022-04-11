@@ -8,6 +8,7 @@ import { UserNumberDto } from './dto/userNumber.dto';
 import mongoose from 'mongoose';
 import { SearchFromNumberDto } from './dto/searchFromNumber.dto';
 import { SearchUserNumberDto } from './dto/searchUserNumber.dto';
+import { rmq } from '@telecom/constants';
 
 @Injectable()
 export class NumberService {
@@ -33,7 +34,12 @@ export class NumberService {
   async findOneNonAssignedFromNumber(): Promise<FromNumber> {
     return await this.numberModel
       .findOne({
-        $or: [{ userAssigned: { $exists: false } }, { userAssigned: null }],
+        $and: [
+          {
+            $or: [{ userAssigned: { $exists: false } }, { userAssigned: null }],
+          },
+          { sentCount: 0 },
+        ],
       })
       .exec();
   }
@@ -69,6 +75,63 @@ export class NumberService {
     searchUserNumberDto: SearchUserNumberDto,
   ): Promise<UserNumber> {
     return await this.userNumberModel.findOne(searchUserNumberDto).exec();
+  }
+
+  async findOneUserNumberRoundRobin(
+    ltNumberUpdateAt: Date,
+    spamCount = rmq.SPAM_LIMIT,
+  ): Promise<FromNumber> {
+    return await this.numberModel
+      .findOne(
+        {
+          $and: [
+            {
+              //TODO: me aseguro de que no este asignado
+              $or: [
+                {
+                  userAssigned: {
+                    $exists: false,
+                  },
+                },
+                {
+                  userAssigned: null,
+                },
+              ],
+            },
+            {
+              $or: [
+                {
+                  $or: [
+                    {
+                      updateAt: {
+                        $exists: false,
+                      },
+                    },
+                    {
+                      updateAt: null,
+                    },
+                    {
+                      updateAt: {
+                        $lt: ltNumberUpdateAt,
+                      },
+                    },
+                  ],
+                },
+                {
+                  sentCount: {
+                    $lt: spamCount,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        null,
+        {
+          sort: { updateAt: -1 },
+        },
+      )
+      .exec();
   }
 
   async createUserNumber(

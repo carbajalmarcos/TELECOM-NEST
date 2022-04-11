@@ -126,7 +126,6 @@ services:
       - services
 
   # DBS
-
   # db-backuper:
   #   build:
   #     context: .
@@ -138,7 +137,6 @@ services:
   #     MESSAGE_DB: telecom-message
   #     DB_USERNAME: username
   #     DB_PASSWORD: password
-  #     DB_PORT: 27017
   #     HISTORIC_DB: telecom-historic
   #   tty: true
   #   depends_on:

@@ -12,6 +12,12 @@ export class FromNumber {
 
   @Prop({ isRequired: false })
   userAssigned: Types.ObjectId;
+
+  @Prop()
+  sentCount: number;
+
+  @Prop()
+  updateAt: Date;
 }
 
 export const FromNumberSchema = SchemaFactory.createForClass(FromNumber);

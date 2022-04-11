@@ -1,6 +1,9 @@
-import mongoose from 'mongoose';
+import { Types } from 'mongoose';
 
 export class FromNumberDto {
+  id?: Types.ObjectId;
   number?: string;
-  userAssigned?: mongoose.Types.ObjectId; //TODO: is it okay ?
+  userAssigned?: Types.ObjectId;
+  sentCount?: number;
+  updateAt?: Date;
 }

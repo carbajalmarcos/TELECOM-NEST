@@ -1,5 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { MessageService, moMessageType, MessageDto } from '@telecom/message';
+import {
+  MessageService,
+  moMessageType,
+  MessageDto,
+  SearchConversationDto,
+} from '@telecom/message';
 import { HttpService } from '@nestjs/axios';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -31,9 +36,11 @@ export class ReceiveSmsService {
   async receiveMessage(data: moMessageType) {
     try {
       const conversationNumbers = [data.destination, data.origin];
+      const searchConversationDto = new SearchConversationDto();
+      searchConversationDto.numbers = conversationNumbers;
       const conversationResult =
-        await this.messageService.findOneConversationByNumbers(
-          conversationNumbers,
+        await this.messageService.findOneConversationByNumbersAndOthers(
+          searchConversationDto,
         );
       const now = new Date();
 

@@ -11,7 +11,7 @@ import { PublisherController } from './publisher.controller';
       exchanges: [
         {
           name: rmq.EXCHANGE_DIRECT_NAME,
-          type: 'direct',
+          type: rmq.EXCHANGE_DIRECT_TYPE,
         },
       ],
       uri: [process.env.RMQ_URL || 'amqp://rabbitmq:5672'],

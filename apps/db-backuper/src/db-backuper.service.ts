@@ -31,7 +31,7 @@ export class DbBackuperService {
     // const exec = executor.exec;
     const dbProductive = process.env.MESSAGE_DB,
       host = process.env.DB_HOST,
-      port = process.env.DB_PORT,
+      port = process.env.MONGO_DB_PORT ?? '27017',
       user = process.env.DB_USERNAME,
       pass = process.env.DB_PASSWORD,
       dbHistoric = process.env.HISTORIC_DB,
@@ -45,18 +45,34 @@ export class DbBackuperService {
     const restoreMessagesTimeCmd = `mongorestore --host=${host} --port=${port} --db=${dbHistoric} --username=${user} --password=${pass}  --authenticationDatabase=admin --collection=messages ${path}/${currentDay}/${dbProductive}/messages.bson`;
     const restoreConversationsTimeCmd = `mongorestore --host=${host} --port=${port} --db=${dbHistoric} --username=${user} --password=${pass}  --authenticationDatabase=admin --collection=conversations ${path}/${currentDay}/${dbProductive}/conversations.bson`;
 
-    console.log('dumps');
+    console.log(
+      '**************************** DUMPS INIT LOGS****************************',
+    );
+    console.log('dumpMessagesCmd:');
     console.log(dumpMessagesCmd);
+    console.log('dumpConversationsCmd:');
+
     console.log(dumpConversationsCmd);
-    console.log('restores');
+
+    console.log(
+      '**************************** DUMPS END LOGS****************************',
+    );
+    console.log(
+      '**************************** RESTORES INIT LOGS ****************************',
+    );
     console.log(restoreMessagesTimeCmd);
     console.log(restoreConversationsTimeCmd);
+    console.log(
+      '**************************** RESTORES END LOGS ****************************',
+    );
     try {
-      exec(dumpMessagesCmd, (err: any, outputDump: any) => {
+      exec(dumpMessagesCmd, (err: any, outputDump: any, stderr: any) => {
         if (err) {
           console.log('dumpMessagesCmd::', err);
           throw err;
         }
+        console.log('dumpMessagesCmd:: outputDump :: ', outputDump);
+        console.log('dumpMessagesCmd:: stderr :: ', stderr);
         exec(dumpConversationsCmd, (err: any, outputDump: any) => {
           if (err) {
             console.log('dumpConversationsCmd::', err);
