@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 import { SearchFromNumberDto } from './dto/searchFromNumber.dto';
 import { SearchUserNumberDto } from './dto/searchUserNumber.dto';
 import { rmq } from '@telecom/constants';
+import { string } from 'yargs';
 
 @Injectable()
 export class NumberService {
@@ -80,13 +81,13 @@ export class NumberService {
   async findOneUserNumberRoundRobin(
     ltNumberUpdateAt: Date,
     spamCount = rmq.SPAM_LIMIT,
+    lockerNumbers: Array<string>,
   ): Promise<FromNumber> {
     return await this.numberModel
       .findOne(
         {
           $and: [
             {
-              //TODO: me aseguro de que no este asignado
               $or: [
                 {
                   userAssigned: {
@@ -97,6 +98,9 @@ export class NumberService {
                   userAssigned: null,
                 },
               ],
+            },
+            {
+              number: { $nin: lockerNumbers },
             },
             {
               $or: [

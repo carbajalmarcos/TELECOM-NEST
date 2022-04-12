@@ -9,3 +9,8 @@ export const rmq = {
   DELAY_MILLISECONDS: '60000',
   SPAM_LIMIT: 9,
 };
+export const redis = {
+  DB_NUMBER_LOCKER: 0,
+  LOCKER_KEY: 'lockedNumbers',
+  DB_LOCALHOST: 'redis-number-locker',
+};

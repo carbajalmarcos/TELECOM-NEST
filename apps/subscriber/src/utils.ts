@@ -1,11 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { UserNumberDto, NumberService, FromNumberDto } from '@telecom/numbers';
-import { rmq } from '@telecom/constants';
+import { rmq, redis } from '@telecom/constants';
+import { RedisService } from '@liaoliaots/nestjs-redis';
+import Redis from 'ioredis';
 
 @Injectable()
 export class NumberUtils {
-  constructor(private readonly numberService: NumberService) {}
+  private readonly redis: Redis;
 
+  constructor(
+    private readonly numberService: NumberService,
+    private readonly redisService: RedisService,
+  ) {
+    this.redis = this.redisService.getClient();
+  }
   /**
    * get the origin number
    * @param  {String} user name
@@ -26,7 +34,7 @@ export class NumberUtils {
       let fromNumberResult;
 
       fromNumberResult =
-        await this.numberService.findOneNonAssignedFromNumber()
+        await this.numberService.findOneNonAssignedFromNumber();
       if (!fromNumberResult) fromNumberResult = await this.getFromNumber();
       const userNumberDto = new UserNumberDto();
       userNumberDto.user = user;
@@ -42,6 +50,7 @@ export class NumberUtils {
       );
       return updateFromNumberResult.number;
     } catch (error) {
+      console.log('getNumberForBidirectionalFlow', error);
       return null;
     }
   }
@@ -51,17 +60,43 @@ export class NumberUtils {
       const result = await this.getFromNumber();
       return result.number;
     } catch (error) {
+      console.log('getNumberForUnidirectionalFlow', error);
       return null;
     }
+  }
+
+  private async getLockerNumbers(): Promise<Array<string>> {
+    const result = await this.redis.lrange(redis.LOCKER_KEY, 0, -1);
+    console.log('getLockerNumbers :: ', result);
+    return result;
+  }
+
+  private async saveLockedNumber(value: string): Promise<number> {
+    const result = await this.redis.lpush(redis.LOCKER_KEY, value);
+    console.log('saveLockedNumber :: ', result);
+    // const result = JSON.stringify(await this.redis.get(key));
+    return result;
+  }
+
+  private async removeLockedNumber(value: string): Promise<number> {
+    const result = await this.redis.lrem(redis.LOCKER_KEY, 0, value);
+    console.log('removeLockedNumber :: ', result);
+    return result;
   }
 
   async getFromNumber(): Promise<FromNumberDto> {
     const from = new Date();
     from.setMinutes(from.getMinutes() - 1);
+    console.log('START REDIS LOCKER');
+    // get all locker numbers from redis
+    const lockedNumbers = await this.getLockerNumbers();
     const result = await this.numberService.findOneUserNumberRoundRobin(
       from,
       rmq.SPAM_LIMIT,
+      lockedNumbers ?? [],
     );
+    // save locker number to redis
+    await this.saveLockedNumber(result.number);
     if (!result) return null;
     const fromNumberDto = new FromNumberDto();
     fromNumberDto.id = result.id;
@@ -84,7 +119,9 @@ export class NumberUtils {
     const updateResult = await this.numberService.updateFromNumber(result.id, {
       ...fromNumberDto,
     });
-
+    // remove locker number from redis (set free number)
+    await this.removeLockedNumber(result.number);
+    console.log('END REDIS LOCKER');
     return updateResult;
   }
 }
