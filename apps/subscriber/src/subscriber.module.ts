@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { SubscriberService } from './subscriber.service';
 import { HttpModule } from '@nestjs/axios';
-import { NumberUtils } from './number-utils';
+import { NumberUtils } from './utils';
 import { MessageModule } from '@telecom/message';
 import { NumbersModule } from '@telecom/numbers';
 import { SubscriberController } from './subscriber.controller';

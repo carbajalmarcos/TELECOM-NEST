@@ -9,7 +9,7 @@ import {
   SearchConversationDto,
   toJasminParams,
 } from '@telecom/message';
-import { NumberUtils } from './number-utils';
+import { NumberUtils } from './utils';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { rmq } from '@telecom/constants';
 

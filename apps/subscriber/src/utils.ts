@@ -26,7 +26,7 @@ export class NumberUtils {
       let fromNumberResult;
 
       fromNumberResult =
-        await this.numberService.findOneNonAssignedFromNumber();
+        await this.numberService.findOneNonAssignedFromNumber()
       if (!fromNumberResult) fromNumberResult = await this.getFromNumber();
       const userNumberDto = new UserNumberDto();
       userNumberDto.user = user;
@@ -65,7 +65,7 @@ export class NumberUtils {
     if (!result) return null;
     const fromNumberDto = new FromNumberDto();
     fromNumberDto.id = result.id;
-    fromNumberDto.number = fromNumberDto.number;
+    fromNumberDto.number = result.number;
     fromNumberDto.sentCount = result.sentCount;
     // first time, setting sentCount
     if (!result.sentCount) {
