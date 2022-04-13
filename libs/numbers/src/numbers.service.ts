@@ -5,11 +5,10 @@ import { FromNumber, FromNumberDocument } from './schemas/from-number.schema';
 import { UserNumber, UserNumberDocument } from './schemas/user-number.schema';
 import { FromNumberDto } from './dto/fromNumber.dto';
 import { UserNumberDto } from './dto/userNumber.dto';
-import mongoose from 'mongoose';
+import { Types } from 'mongoose';
 import { SearchFromNumberDto } from './dto/searchFromNumber.dto';
 import { SearchUserNumberDto } from './dto/searchUserNumber.dto';
 import { rmq } from '@telecom/constants';
-import { string } from 'yargs';
 
 @Injectable()
 export class NumberService {
@@ -20,9 +19,7 @@ export class NumberService {
     private readonly userNumberModel: Model<UserNumberDocument>,
   ) {}
 
-  async findOneFromNumberById(
-    id: mongoose.Types.ObjectId,
-  ): Promise<FromNumber> {
+  async findOneFromNumberById(id: Types.ObjectId): Promise<FromNumber> {
     return await this.numberModel.findById(id).exec();
   }
 
@@ -56,7 +53,7 @@ export class NumberService {
   }
 
   async updateFromNumber(
-    id: mongoose.Types.ObjectId,
+    id: Types.ObjectId,
     fromNumberDto: FromNumberDto,
   ): Promise<FromNumber> {
     return await this.numberModel
@@ -81,12 +78,15 @@ export class NumberService {
   async findOneUserNumberRoundRobin(
     ltNumberUpdateAt: Date,
     spamCount = rmq.SPAM_LIMIT,
-    lockerNumbers: Array<string>,
+    // lockerNumbers: Array<string>,
   ): Promise<FromNumber> {
     return await this.numberModel
-      .findOne(
+      .findOneAndUpdate(
         {
           $and: [
+            {
+              locked: false,
+            },
             {
               $or: [
                 {
@@ -99,9 +99,9 @@ export class NumberService {
                 },
               ],
             },
-            {
-              number: { $nin: lockerNumbers },
-            },
+            // {
+            //   number: { $nin: lockerNumbers },
+            // },
             {
               $or: [
                 {
@@ -130,11 +130,21 @@ export class NumberService {
             },
           ],
         },
-        null,
+        {
+          locked: true,
+        },
         {
           sort: { updateAt: -1 },
         },
       )
+      .exec();
+  }
+
+  async unlockNumber(id: Types.ObjectId): Promise<FromNumber> {
+    return await this.numberModel
+      .findByIdAndUpdate(id, {
+        locked: false,
+      })
       .exec();
   }
 

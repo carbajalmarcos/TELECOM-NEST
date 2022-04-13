@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
 
 export class SearchFromNumberDto {
-  number?: string; //TODO: is it okay ? user name
+  number?: string;
   userAssigned?: mongoose.Types.ObjectId;
   updateAt?: Date;
   sentCount?: number;
+  locked?: boolean;
 }

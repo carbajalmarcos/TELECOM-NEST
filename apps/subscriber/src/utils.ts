@@ -87,16 +87,16 @@ export class NumberUtils {
   async getFromNumber(): Promise<FromNumberDto> {
     const from = new Date();
     from.setMinutes(from.getMinutes() - 1);
-    console.log('START REDIS LOCKER');
+    console.log('START LOCKER');
     // get all locker numbers from redis
-    const lockedNumbers = await this.getLockerNumbers();
+    // const lockedNumbers = await this.getLockerNumbers();
     const result = await this.numberService.findOneUserNumberRoundRobin(
       from,
       rmq.SPAM_LIMIT,
-      lockedNumbers ?? [],
+      // lockedNumbers ?? [],
     );
     // save locker number to redis
-    await this.saveLockedNumber(result.number);
+    // await this.saveLockedNumber(result.number);
     if (!result) return null;
     const fromNumberDto = new FromNumberDto();
     fromNumberDto.id = result.id;
@@ -120,8 +120,9 @@ export class NumberUtils {
       ...fromNumberDto,
     });
     // remove locker number from redis (set free number)
-    await this.removeLockedNumber(result.number);
-    console.log('END REDIS LOCKER');
+    // await this.removeLockedNumber(result.number);
+    this.numberService.unlockNumber(result.id);
+    console.log('END LOCKER');
     return updateResult;
   }
 }

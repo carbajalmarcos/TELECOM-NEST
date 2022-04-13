@@ -16,6 +16,9 @@ export class FromNumber {
   @Prop()
   sentCount: number;
 
+  @Prop({ default: false })
+  locked: boolean;
+
   @Prop()
   updateAt: Date;
 }
