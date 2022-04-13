@@ -27,6 +27,7 @@ export class DbDataSeederService {
         updateAt: date,
         sentCount: 0,
         locked: false,
+        userAssigned: null,
       });
       console.info('saved  number ::', JSON.stringify(number));
     } else {

@@ -83,48 +83,37 @@ export class NumberService {
     return await this.numberModel
       .findOneAndUpdate(
         {
-          $and: [
+          $or: [
             {
-              locked: false,
+              $and: [
+                {
+                  userAssigned: null,
+                },
+                { sentCount: { $in: [0] } },
+                { locked: false },
+              ],
             },
             {
-              $or: [
+              $and: [
                 {
-                  userAssigned: {
-                    $exists: false,
-                  },
+                  locked: false,
                 },
                 {
                   userAssigned: null,
                 },
-              ],
-            },
-            // {
-            //   number: { $nin: lockerNumbers },
-            // },
-            {
-              $or: [
                 {
                   $or: [
-                    {
-                      updateAt: {
-                        $exists: false,
-                      },
-                    },
-                    {
-                      updateAt: null,
-                    },
                     {
                       updateAt: {
                         $lt: ltNumberUpdateAt,
                       },
                     },
+                    {
+                      sentCount: {
+                        $lt: spamCount,
+                      },
+                    },
                   ],
-                },
-                {
-                  sentCount: {
-                    $lt: spamCount,
-                  },
                 },
               ],
             },
@@ -132,9 +121,6 @@ export class NumberService {
         },
         {
           locked: true,
-        },
-        {
-          sort: { updateAt: -1 },
         },
       )
       .exec();
