@@ -4,5 +4,5 @@ export class UserNumberDto {
   id?: string;
   user: string; //TODO: is it okay ? user name
   currentNumber: mongoose.Types.ObjectId;
-  quarantineNumber?: [quarantineNumber];
+  quarantineNumbers?: quarantineNumber[];
 }

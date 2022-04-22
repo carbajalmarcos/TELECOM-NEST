@@ -6,6 +6,6 @@ async function bootstrap() {
   const app = await NestFactory.create(DbBackuperModule);
   const service = app.get(DbBackuperService);
   service.startBackupAndMigration();
-  await app.listen(42234);
+  await app.listen(3232);
 }
 bootstrap();

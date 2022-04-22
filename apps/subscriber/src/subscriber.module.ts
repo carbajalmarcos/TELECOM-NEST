@@ -6,17 +6,11 @@ import { MessageModule } from '@telecom/message';
 import { NumbersModule } from '@telecom/numbers';
 import { SubscriberController } from './subscriber.controller';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { rmq, redis } from '@telecom/constants';
-import { RedisModule } from '@liaoliaots/nestjs-redis';
+import { rmq } from '@telecom/constants';
 
 @Module({
   imports: [
     HttpModule,
-    RedisModule.forRoot({
-      config: {
-        url: `redis://${redis.DB_LOCALHOST}:${process.env.REDIS_PORT}/${redis.DB_NUMBER_LOCKER}`,
-      },
-    }),
     RabbitMQModule.forRoot(RabbitMQModule, {
       exchanges: [
         {

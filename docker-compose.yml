@@ -36,14 +36,13 @@ services:
       NUMBERS_DB: telecom-numbers
       SEND_JASMIN_PASSOWRD: 123
       SEND_JASMIN_USERNAME: testing
-      REDIS_PORT: "${REDIS_PORT}"
     tty: true
     restart: on-failure
     depends_on:
       - rabbitmq
       - jasmin
       - mongodb
-      - redis-number-locker
+      # - redis-number-locker
     networks:
       - services
 
@@ -68,7 +67,7 @@ services:
       - rabbitmq
       - jasmin
       - mongodb
-      - redis-number-locker
+      # - redis-number-locker
     networks:
       - services
 
@@ -82,6 +81,7 @@ services:
       - "${ENDPOINTS_UTILS_PORT}:3010"
     environment:
       MESSAGE_DB: telecom-message
+      NUMBERS_DB: telecom-numbers
       DB_USERNAME: username
       DB_PASSWORD: password
     tty: true
@@ -109,7 +109,7 @@ services:
     networks:
       - services
 
-  #Server that receive from jasmine
+  # #Server that receive from jasmine
   receive-sms:
     build:
       context: .
@@ -129,23 +129,25 @@ services:
       - services
 
   # DBS
-  # db-backuper:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.db-backuper
-  #     target: development
-  #   container_name: db-backuper
-  #   environment:
-  #     DB_HOST: mongodb
-  #     MESSAGE_DB: telecom-message
-  #     DB_USERNAME: username
-  #     DB_PASSWORD: password
-  #     HISTORIC_DB: telecom-historic
-  #   tty: true
-  #   depends_on:
-  #     - mongodb
-  #   networks:
-  #     - services
+  db-backuper:
+    build:
+      context: .
+      dockerfile: Dockerfile.db-backuper
+      target: development
+    container_name: db-backuper
+    environment:
+      DB_HOST: mongodb
+      MESSAGE_DB: telecom-message
+      DB_USERNAME: username
+      DB_PASSWORD: password
+      HISTORIC_DB: telecom-historic
+    tty: true
+    volumes:
+      - './backup:/usr/src/app/backup'
+    depends_on:
+      - mongodb
+    networks:
+      - services
 
   # DB to save messages (conversations, messages)
 
@@ -161,19 +163,8 @@ services:
         MONGO_INITDB_ROOT_DATABASE: default
     volumes: 
         - ./docker-entrypoint-initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-        - ./data/db-mongo:/data/db
-        - ./backup:/backup
-    networks:
-      - services
-  redis-number-locker:
-    container_name: redis-number-locker
-    image: redis:6.2-alpine
-    restart: always
-    ports:
-      - '${REDIS_PORT}:6379'
-    command: redis-server 
-    # volumes: 
-      # - local_redis_data:/data
+        - ./db_db:/data/db
+        
     networks:
       - services
   # Queue system (receive message from publisher and it is consumed from  consumers)
@@ -221,26 +212,6 @@ services:
       AMQP_BROKER_HOST: rabbit-mq
     networks:
       - services
-
-  # NGINX     
-  # gateway:
-  #   container_name: gateway
-  #   build:
-  #     context: ./apps/gateway
-  #   restart: always
-  #   ports:
-  #     - ${GATEWAY_PORT}:8080
-  #   depends_on:
-  #     - endpoints-utils
-  #     - receive-sms
-  #     - publisher
-  #   environment:
-  #       PUBLISHER_PORT: ${PUBLISHER_PORT}
-  #       ENDPOINTS_UTILS_PORT: ${ENDPOINTS_UTILS_PORT}
-  #       RECEIVE_SMS_PORT: ${RECEIVE_SMS_PORT}
-  #   networks:
-  #     - services
-
 networks:
   services:
     external: false

@@ -1,33 +1,36 @@
 import { Injectable } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
+// import { Cron } from '@nestjs/schedule';
 import {
-  ConversationDto,
-  MessageDto,
   MessageService,
-  mtMessageType,
-  toJasminParams,
+  SearchConversationDto,
+  SearchMessageDto,
 } from '@telecom/message';
 
-import { exec, spawn } from 'child_process';
-import { stderr } from 'process';
+import { exec } from 'child_process';
 
 @Injectable()
 export class DbBackuperService {
   constructor(private readonly messageService: MessageService) {}
 
-  private getQuery = (): string => {
+  private getQuery = (dateTo: Date): string => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-    //TODO: now - 120 days
-    const dateTo = new Date(now.setDate(now.getDate() - 1));
     return JSON.stringify({
       createdAt: {
-        $lt: dateTo,
+        $lt: { $date: new Date(dateTo.toISOString()) },
       },
     });
   };
 
+  // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async startBackupAndMigration(): Promise<void> {
     const now = new Date();
+    //TODO: now - 120 days
+    // const dateTo = new Date(now.setDate(now.getDate()));
+    const dateTo = new Date();
+    dateTo.setDate(dateTo.getDate() - 1);
     // const exec = executor.exec;
     const dbProductive = process.env.MESSAGE_DB,
       host = process.env.DB_HOST,
@@ -35,44 +38,30 @@ export class DbBackuperService {
       user = process.env.DB_USERNAME,
       pass = process.env.DB_PASSWORD,
       dbHistoric = process.env.HISTORIC_DB,
-      query = this.getQuery(),
+      query = this.getQuery(dateTo),
       path = './backup',
       currentDay = `${now.getFullYear()}${now.getMonth()}${now.getDate()}`;
-
     // TODO : do 120 days query
-    const dumpMessagesCmd = `mongodump --query='${query}' --collection=messages --host=${host} --port=${port} --db=${dbProductive} --username=${user} --password=${pass}  --authenticationDatabase=admin --out=${path}/${currentDay}`;
-    const dumpConversationsCmd = `mongodump --query='${query}' --collection=conversations --host=${host} --port=${port} --db=${dbProductive} --username=${user} --password=${pass}  --authenticationDatabase=admin --out=${path}/${currentDay}`;
-    const restoreMessagesTimeCmd = `mongorestore --host=${host} --port=${port} --db=${dbHistoric} --username=${user} --password=${pass}  --authenticationDatabase=admin --collection=messages ${path}/${currentDay}/${dbProductive}/messages.bson`;
-    const restoreConversationsTimeCmd = `mongorestore --host=${host} --port=${port} --db=${dbHistoric} --username=${user} --password=${pass}  --authenticationDatabase=admin --collection=conversations ${path}/${currentDay}/${dbProductive}/conversations.bson`;
+    const dumpMessagesCmd = `mongoexport --query='${query}' --collection=messages --host=${host} --port=${port} --db=${dbProductive} --username=${user} --password=${pass}  --authenticationDatabase=admin --out=${path}/${currentDay}-messages.json`;
+    const dumpConversationsCmd = `mongoexport --query='${query}' --collection=conversations --host=${host} --port=${port} --db=${dbProductive} --username=${user} --password=${pass}  --authenticationDatabase=admin --out=${path}/${currentDay}-conversations.json`;
+    const restoreMessagesTimeCmd = `mongoimport --mode=upsert --host=${host} --port=${port} --db=${dbHistoric} --username=${user} --password=${pass}  --authenticationDatabase=admin --collection=messages ${path}/${currentDay}-messages.json `;
+    const restoreConversationsTimeCmd = `mongoimport --mode=upsert --host=${host} --port=${port} --db=${dbHistoric} --username=${user} --password=${pass}  --authenticationDatabase=admin --collection=conversations  ${path}/${currentDay}-conversations.json`;
 
-    console.log(
-      '**************************** DUMPS INIT LOGS****************************',
-    );
     console.log('dumpMessagesCmd:');
     console.log(dumpMessagesCmd);
     console.log('dumpConversationsCmd:');
-
     console.log(dumpConversationsCmd);
-
-    console.log(
-      '**************************** DUMPS END LOGS****************************',
-    );
-    console.log(
-      '**************************** RESTORES INIT LOGS ****************************',
-    );
+    console.log('restoreMessagesTimeCmd:');
     console.log(restoreMessagesTimeCmd);
+    console.log('restoreConversationsTimeCmd:');
     console.log(restoreConversationsTimeCmd);
-    console.log(
-      '**************************** RESTORES END LOGS ****************************',
-    );
+
     try {
       exec(dumpMessagesCmd, (err: any, outputDump: any, stderr: any) => {
         if (err) {
           console.log('dumpMessagesCmd::', err);
           throw err;
         }
-        console.log('dumpMessagesCmd:: outputDump :: ', outputDump);
-        console.log('dumpMessagesCmd:: stderr :: ', stderr);
         exec(dumpConversationsCmd, (err: any, outputDump: any) => {
           if (err) {
             console.log('dumpConversationsCmd::', err);
@@ -83,12 +72,36 @@ export class DbBackuperService {
               console.log('restoreMessagesTimeCmd::', err);
               throw err;
             }
-            exec(restoreConversationsTimeCmd, (err: any, outputDump: any) => {
-              if (err) {
-                console.log('restoreConversationsTimeCmd::', err);
-                throw err;
-              }
-            });
+            exec(
+              restoreConversationsTimeCmd,
+              async (err: any, outputDump: any) => {
+                if (err) {
+                  console.log('restoreConversationsTimeCmd::', err);
+                  throw err;
+                }
+                try {
+                  const searchMessageDto = new SearchMessageDto();
+                  searchMessageDto.createdAt = dateTo;
+                  const deleteMessagesResult =
+                    await this.messageService.deleteMessagesByLt(
+                      searchMessageDto,
+                    );
+                  console.log('deleteMessagesResult:: ', deleteMessagesResult);
+                  const searchConversationDto = new SearchConversationDto();
+                  searchConversationDto.updatedAt = dateTo;
+                  const deleteConversatonsResult =
+                    await this.messageService.deleteConversationsByLt(
+                      searchMessageDto,
+                    );
+                  console.log(
+                    'deleteConversationsResult:: ',
+                    deleteConversatonsResult,
+                  );
+                } catch (error) {
+                  console.log('after dump and restore error :: ', error);
+                }
+              },
+            );
           });
         });
       });

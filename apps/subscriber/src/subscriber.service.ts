@@ -93,6 +93,8 @@ export class SubscriberService {
   }
 
   async sendMessage(data: mtMessageType) {
+    console.log('data ::', JSON.stringify(data));
+
     try {
       let jasminResponse;
       let jasminError;

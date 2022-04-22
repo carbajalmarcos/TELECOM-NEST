@@ -1,7 +1,8 @@
 #!/bin/bash
-libraries=(user auth message numbers, constant)
+libraries=(user auth message numbers constant)
 # apps=(publisher db-data-seeder subscriber receive-sms telecom db-backuper)
-apps=(publisher db-data-seeder subscriber receive-sms telecom )
+apps=(publisher db-data-seeder subscriber receive-sms telecom db-backuper)
+
 
 green=`tput setaf 2`
 

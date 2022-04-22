@@ -31,14 +31,46 @@ export class NumberService {
 
   async findOneNonAssignedFromNumber(): Promise<FromNumber> {
     return await this.numberModel
-      .findOne({
-        $and: [
-          {
-            $or: [{ userAssigned: { $exists: false } }, { userAssigned: null }],
-          },
-          { sentCount: 0 },
-        ],
-      })
+      .findOneAndUpdate(
+        {
+          $and: [
+            {
+              $or: [
+                { userAssigned: { $exists: false } },
+                { userAssigned: null },
+              ],
+            },
+            { sentCount: 0 },
+          ],
+        },
+        {
+          locked: true,
+        },
+      )
+      .exec();
+  }
+
+  async findOneNonAssignedFromNumberForRotation(
+    quarantineNumbers: Types.ObjectId[],
+  ): Promise<FromNumber> {
+    return await this.numberModel
+      .findOneAndUpdate(
+        {
+          $and: [
+            {
+              $or: [
+                { userAssigned: { $exists: false } },
+                { userAssigned: null },
+              ],
+            },
+            { sentCount: 0 },
+            { _id: { $nin: quarantineNumbers } },
+          ],
+        },
+        {
+          locked: true,
+        },
+      )
       .exec();
   }
 
@@ -73,6 +105,59 @@ export class NumberService {
     searchUserNumberDto: SearchUserNumberDto,
   ): Promise<UserNumber> {
     return await this.userNumberModel.findOne(searchUserNumberDto).exec();
+  }
+
+  async findFromNumberByNumberAndNonAssignedWithNumberParam(
+    number: string,
+    quarantineNumbers: Types.ObjectId[],
+  ): Promise<FromNumber> {
+    return await this.numberModel
+      .findOneAndUpdate(
+        {
+          $and: [
+            {
+              $or: [
+                { userAssigned: { $exists: false } },
+                { userAssigned: null },
+              ],
+            },
+            { number },
+            { _id: { $nin: quarantineNumbers } },
+          ],
+        },
+        {
+          locked: true,
+        },
+      )
+      .exec();
+  }
+
+  async findFromNumberByNumberAndNonAssignedWithoutNumberParam(
+    quarantineNumbers: Types.ObjectId[],
+  ): Promise<FromNumber> {
+    console.log(
+      'findFromNumberByNumberAndNonAssignedWithoutNumberParam ::',
+      quarantineNumbers,
+    );
+
+    return await this.numberModel
+      .findOneAndUpdate(
+        {
+          $and: [
+            {
+              $or: [
+                { userAssigned: { $exists: false } },
+                { userAssigned: null },
+              ],
+            },
+            { _id: { $nin: quarantineNumbers } },
+          ],
+        },
+        {
+          locked: true,
+        },
+      )
+      .exec();
   }
 
   async findOneUserNumberRoundRobin(
@@ -126,6 +211,53 @@ export class NumberService {
       .exec();
   }
 
+  async findOneUserNumberRoundRobinWhitQuarantineNumber(
+    ltNumberUpdateAt: Date,
+    spamCount = rmq.SPAM_LIMIT,
+    quarantineNumbers: Types.ObjectId[],
+    // lockerNumbers: Array<string>,
+  ): Promise<FromNumber> {
+    console.log('findOneUserNumberRoundRobinWhitQuarantineNumber');
+    return await this.numberModel
+      .findOneAndUpdate(
+        {
+          $and: [
+            {
+              $and: [
+                {
+                  userAssigned: null,
+                },
+                { locked: false },
+                { _id: { $nin: quarantineNumbers } },
+              ],
+            },
+            {
+              $and: [
+                {
+                  $or: [
+                    {
+                      updateAt: {
+                        $lt: ltNumberUpdateAt,
+                      },
+                    },
+                    {
+                      sentCount: {
+                        $lt: spamCount,
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          locked: true,
+        },
+      )
+      .exec();
+  }
+
   async unlockNumber(id: Types.ObjectId): Promise<FromNumber> {
     return await this.numberModel
       .findByIdAndUpdate(id, {
@@ -143,11 +275,11 @@ export class NumberService {
   }
 
   async updateUserNumber(
-    id: string,
+    id: Types.ObjectId,
     updateUserNumberDto: UserNumberDto,
   ): Promise<UserNumber> {
     return await this.userNumberModel
-      .findByIdAndUpdate(id, updateUserNumberDto)
+      .findByIdAndUpdate(id, { ...updateUserNumberDto })
       .exec();
   }
 

@@ -121,4 +121,27 @@ export class MessageService {
       .sort({ createdAt: -1 })
       .exec();
   }
+
+  async deleteMessagesByLt(searchMessageDto: SearchMessageDto): Promise<any> {
+    return await this.messageModel
+      .deleteMany({
+        createdAt: {
+          $lt: searchMessageDto.createdAt,
+        },
+      })
+      .exec();
+  }
+
+  // we can delete conversations if updateAt is older than x time (no createdAt)
+  async deleteConversationsByLt(
+    searchConversationDto: SearchConversationDto,
+  ): Promise<any> {
+    return await this.conversationModel
+      .deleteMany({
+        updatedAt: {
+          $lt: searchConversationDto.createdAt,
+        },
+      })
+      .exec();
+  }
 }

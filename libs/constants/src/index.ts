@@ -9,8 +9,8 @@ export const rmq = {
   DELAY_MILLISECONDS: '60000',
   SPAM_LIMIT: 9,
 };
-export const redis = {
-  DB_NUMBER_LOCKER: 0,
-  LOCKER_KEY: 'lockedNumbers',
-  DB_LOCALHOST: 'redis-number-locker',
+// TODO: check if 120 days is okey
+export const utils = {
+  QUARANTINE_NUMBERS_DAYS: 120,
+  POOL_NUMBERS_QUANTITY: 4,
 };

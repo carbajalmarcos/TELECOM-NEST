@@ -9,12 +9,16 @@ import {
 } from '@nestjs/common';
 import { MessageService } from '@telecom/message';
 import { JwtAuthGuard, LocalAuthGuard, AuthService } from '@telecom/auth';
+import { AppService } from './app.service';
+import { NumberService, UserNumberDto } from '@telecom/numbers';
 
 @Controller()
 export class AppController {
   constructor(
     private readonly messageService: MessageService,
     private authService: AuthService,
+    private appService: AppService,
+    private readonly numberService: NumberService,
   ) {}
   // TODO: this method will be place for owner auth system
   @UseGuards(LocalAuthGuard)
@@ -47,5 +51,14 @@ export class AppController {
     if (!conversation || conversation.user.toString() !== req.user.userId)
       return {};
     return result;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/number/rotation')
+  async changeAssignedNumber(@Param() param, @Req() req) {
+    return await this.appService.numberRotation(
+      param.id ?? undefined,
+      req.user.userId,
+    );
   }
 }

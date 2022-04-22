@@ -4,7 +4,7 @@ import { Document, Types } from 'mongoose';
 export type UserNumberDocument = UserNumber & Document;
 
 export type quarantineNumber = {
-  number: string;
+  number: Types.ObjectId;
   updateAt: Date;
 };
 
@@ -19,7 +19,7 @@ export class UserNumber {
   currentNumber: Types.ObjectId;
 
   @Prop({ isRequired: false })
-  quarantineNumber: [quarantineNumber];
+  quarantineNumbers: quarantineNumber[];
 }
 
 export const UserNumberSchema = SchemaFactory.createForClass(UserNumber);

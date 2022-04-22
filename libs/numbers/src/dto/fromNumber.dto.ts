@@ -6,4 +6,5 @@ export class FromNumberDto {
   userAssigned?: Types.ObjectId;
   sentCount?: number;
   updateAt?: Date;
+  locked?: boolean;
 }

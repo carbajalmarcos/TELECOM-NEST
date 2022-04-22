@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NumberService } from '@telecom/numbers';
+import { utils } from '@telecom/constants';
 
 @Injectable()
 export class DbDataSeederService {
@@ -8,8 +9,7 @@ export class DbDataSeederService {
   async seed() {
     const seedersLoaded = [];
     const date = new Date();
-    const NUMBERS_QUANTITY = 10000;
-    for (let i = 0; i < NUMBERS_QUANTITY; i++) {
+    for (let i = 0; i < utils.POOL_NUMBERS_QUANTITY; i++) {
       seedersLoaded.push(this.singleSeder(i, date));
     }
     await Promise.all(seedersLoaded);
