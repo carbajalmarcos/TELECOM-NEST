@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { NumberService, FromNumberDto, UserNumberDto } from '@telecom/numbers';
-import { rmq } from '@telecom/constants';
-import { log } from 'console';
+import { NumberService, UserNumberDto } from '@telecom/numbers';
+import { rmq, utils } from '@telecom/constants';
+import { FromNumberDocument } from '@telecom/numbers/schemas/from-number.schema';
 
 @Injectable()
 export class AppService {
@@ -26,11 +26,12 @@ export class AppService {
         (qnumber) => {
           const qdate = new Date(qnumber.updateAt);
           const dateToCompare = new Date();
-          dateToCompare.setDate(dateToCompare.getDate() - 2);
+          dateToCompare.setDate(
+            dateToCompare.getDate() - utils.QUARANTINE_NUMBERS_DAYS,
+          );
           return qdate > dateToCompare;
         },
       );
-
       // number exists ?
       if (number) {
         numberResult =
@@ -40,17 +41,16 @@ export class AppService {
           );
         if (!numberResult) {
           return {
-            message: 'No available number',
-            number: numberResult.number,
+            message: 'Number not found',
+            number: number,
           };
         }
       }
 
       // old number asignment
-      const olderNumber = await this.numberService.findOneFromNumberById(
+      const olderNumber = (await this.numberService.findOneFromNumberById(
         userNumberResult.currentNumber,
-      );
-
+      )) as FromNumberDocument;
       // no number param, lets get number result
       if (!numberResult) {
         //searchin unnasigned number
@@ -79,24 +79,23 @@ export class AppService {
       // updating user number
       const userNumberDto = new UserNumberDto();
       userNumberDto.user = user;
-      userNumberDto.currentNumber = numberResult.id;
+      userNumberDto.currentNumber = numberResult._id;
       userNumberDto.quarantineNumbers = quarantineNumbers;
-
       const savedUserNumberResult = await this.numberService.updateUserNumber(
         userNumberResult.id,
         userNumberDto,
       );
-
       const updateFromNumberResult = await this.numberService.updateFromNumber(
-        numberResult.id,
+        numberResult._id,
         { userAssigned: savedUserNumberResult.id, locked: false },
       );
       console.info(
         'from number updated::',
         JSON.stringify(updateFromNumberResult),
       );
+      console.info('olderNumber id ::', olderNumber._id);
       const oldFromNumberUpdated = await this.numberService.updateFromNumber(
-        olderNumber.id,
+        olderNumber._id,
         {
           userAssigned: null,
           locked: false,
@@ -104,18 +103,19 @@ export class AppService {
           updateAt: new Date(),
         },
       );
-
       console.info(
         'old from number updated::',
         JSON.stringify(oldFromNumberUpdated),
       );
-
       return {
         message: 'Number assigned successfully',
         number: numberResult.number,
       };
     } catch (error) {
       console.log(error);
+      return {
+        message: 'No available number',
+      };
     }
   }
 }

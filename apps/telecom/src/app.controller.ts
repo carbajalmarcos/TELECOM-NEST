@@ -6,6 +6,7 @@ import {
   Param,
   Request,
   Req,
+  Query,
 } from '@nestjs/common';
 import { MessageService } from '@telecom/message';
 import { JwtAuthGuard, LocalAuthGuard, AuthService } from '@telecom/auth';
@@ -55,9 +56,9 @@ export class AppController {
 
   @UseGuards(JwtAuthGuard)
   @Post('/number/rotation')
-  async changeAssignedNumber(@Param() param, @Req() req) {
+  async changeAssignedNumber(@Query() param, @Req() req) {
     return await this.appService.numberRotation(
-      param.id ?? undefined,
+      param.number ?? undefined,
       req.user.userId,
     );
   }

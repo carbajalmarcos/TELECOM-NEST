@@ -47,7 +47,7 @@ export class NumberService {
           locked: true,
         },
       )
-      .exec();
+      .lean();
   }
 
   async findOneNonAssignedFromNumberForRotation(
@@ -71,7 +71,7 @@ export class NumberService {
           locked: true,
         },
       )
-      .exec();
+      .lean();
   }
 
   async createFromNumber(
@@ -94,7 +94,7 @@ export class NumberService {
   }
 
   async deleteFromNumber(id: string): Promise<FromNumber> {
-    return await this.numberModel.findByIdAndDelete(id).exec();
+    return await this.numberModel.findByIdAndDelete(id).lean();
   }
 
   async findOneUserNumberById(id: string): Promise<UserNumber> {
@@ -104,7 +104,10 @@ export class NumberService {
   async findOneUserNumber(
     searchUserNumberDto: SearchUserNumberDto,
   ): Promise<UserNumber> {
-    return await this.userNumberModel.findOne(searchUserNumberDto).exec();
+    const result = await this.userNumberModel
+      .findOne(searchUserNumberDto)
+      .exec();
+    return result;
   }
 
   async findFromNumberByNumberAndNonAssignedWithNumberParam(
@@ -129,17 +132,12 @@ export class NumberService {
           locked: true,
         },
       )
-      .exec();
+      .lean();
   }
 
   async findFromNumberByNumberAndNonAssignedWithoutNumberParam(
     quarantineNumbers: Types.ObjectId[],
   ): Promise<FromNumber> {
-    console.log(
-      'findFromNumberByNumberAndNonAssignedWithoutNumberParam ::',
-      quarantineNumbers,
-    );
-
     return await this.numberModel
       .findOneAndUpdate(
         {
@@ -157,13 +155,12 @@ export class NumberService {
           locked: true,
         },
       )
-      .exec();
+      .lean();
   }
 
   async findOneUserNumberRoundRobin(
     ltNumberUpdateAt: Date,
     spamCount = rmq.SPAM_LIMIT,
-    // lockerNumbers: Array<string>,
   ): Promise<FromNumber> {
     return await this.numberModel
       .findOneAndUpdate(
@@ -208,16 +205,14 @@ export class NumberService {
           locked: true,
         },
       )
-      .exec();
+      .lean();
   }
 
   async findOneUserNumberRoundRobinWhitQuarantineNumber(
     ltNumberUpdateAt: Date,
     spamCount = rmq.SPAM_LIMIT,
     quarantineNumbers: Types.ObjectId[],
-    // lockerNumbers: Array<string>,
   ): Promise<FromNumber> {
-    console.log('findOneUserNumberRoundRobinWhitQuarantineNumber');
     return await this.numberModel
       .findOneAndUpdate(
         {
@@ -255,7 +250,7 @@ export class NumberService {
           locked: true,
         },
       )
-      .exec();
+      .lean();
   }
 
   async unlockNumber(id: Types.ObjectId): Promise<FromNumber> {
@@ -263,7 +258,7 @@ export class NumberService {
       .findByIdAndUpdate(id, {
         locked: false,
       })
-      .exec();
+      .lean();
   }
 
   async createUserNumber(

@@ -9,8 +9,10 @@ export const rmq = {
   DELAY_MILLISECONDS: '60000',
   SPAM_LIMIT: 9,
 };
+
 // TODO: check if 120 days is okey
 export const utils = {
   QUARANTINE_NUMBERS_DAYS: 120,
   POOL_NUMBERS_QUANTITY: 4,
+  OLD_DAY_HISTORIC: 120,
 };

@@ -27,7 +27,7 @@ export class MessageService {
         numbers: { $all: searchConversationDto.numbers },
         ...searchConversationDto,
       })
-      .exec();
+      .lean();
   }
 
   async findOneConversation(
@@ -58,7 +58,7 @@ export class MessageService {
   ): Promise<Conversation> {
     return await this.conversationModel
       .findByIdAndUpdate(id, conversationDto)
-      .exec();
+      .lean();
   }
 
   async deleteConversation(id: string): Promise<Conversation> {

@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { UserNumberDto, NumberService, FromNumberDto } from '@telecom/numbers';
 import { rmq } from '@telecom/constants';
+import {
+  FromNumber,
+  FromNumberDocument,
+} from '@telecom/numbers/schemas/from-number.schema';
 
 @Injectable()
 export class NumberUtils {
@@ -17,7 +21,7 @@ export class NumberUtils {
         user,
       });
       // it checks if  user has assigned number
-      if (userNumberResult) {
+      if (userNumberResult && userNumberResult !== null) {
         const fromNumberResult = await this.numberService.findOneFromNumberById(
           userNumberResult.currentNumber,
         );
@@ -25,25 +29,25 @@ export class NumberUtils {
       }
 
       fromNumberResult =
-        await this.numberService.findOneNonAssignedFromNumber();
-      if (!fromNumberResult) fromNumberResult = await this.getFromNumber();
+        (await this.numberService.findOneNonAssignedFromNumber()) as FromNumber;
+      if (!fromNumberResult)
+        fromNumberResult = (await this.getFromNumber()) as FromNumber;
       const userNumberDto = new UserNumberDto();
       userNumberDto.user = user;
-      userNumberDto.currentNumber = fromNumberResult.id;
+      userNumberDto.currentNumber = fromNumberResult._id;
       //after getting number we proceed to create a entity user number
       const savedUserNumberResult = await this.numberService.createUserNumber(
         userNumberDto,
       );
       // updating orign number (assigned user field updated) and unlock the number
       const updateFromNumberResult = await this.numberService.updateFromNumber(
-        fromNumberResult.id,
+        fromNumberResult._id,
         { userAssigned: savedUserNumberResult.id, locked: false },
       );
       return updateFromNumberResult.number;
     } catch (error) {
-      console.log('getNumberForBidirectionalFlow', error);
       if (fromNumberResult) {
-        await this.numberService.unlockNumber(fromNumberResult.id);
+        await this.numberService.unlockNumber(fromNumberResult._id);
       }
       return null;
     }
@@ -51,30 +55,28 @@ export class NumberUtils {
 
   async getNumberForUnidirectionalFlow(): Promise<string> {
     try {
-      const result = await this.getFromNumber();
+      const result = (await this.getFromNumber()) as FromNumberDocument;
       // unlock the number
-      await this.numberService.unlockNumber(result.id);
+      await this.numberService.unlockNumber(result._id);
       return result.number;
     } catch (error) {
-      console.log('getNumberForUnidirectionalFlow', error);
       return null;
     }
   }
 
-  async getFromNumber(): Promise<FromNumberDto> {
+  async getFromNumber(): Promise<FromNumber> {
     let result;
     try {
       const from = new Date();
       from.setMinutes(from.getMinutes() - 1);
       console.log('START LOCKER');
-      result = await this.numberService.findOneUserNumberRoundRobin(
+      result = (await this.numberService.findOneUserNumberRoundRobin(
         from,
         rmq.SPAM_LIMIT,
-      );
-
+      )) as FromNumberDocument;
       if (!result) return null;
       const fromNumberDto = new FromNumberDto();
-      fromNumberDto.id = result.id;
+      fromNumberDto.id = result._id;
       fromNumberDto.number = result.number;
       fromNumberDto.sentCount = result.sentCount;
       // first time, setting sentCount
@@ -92,16 +94,15 @@ export class NumberUtils {
       fromNumberDto.updateAt = new Date();
 
       const updateResult = await this.numberService.updateFromNumber(
-        result.id,
+        result._id,
         {
           ...fromNumberDto,
         },
       );
-      console.log('END LOCKER');
       return updateResult;
     } catch (error) {
       if (result) {
-        await this.numberService.unlockNumber(result.id);
+        await this.numberService.unlockNumber(result._id);
       }
       console.log('getFromNumber', error);
       throw error;

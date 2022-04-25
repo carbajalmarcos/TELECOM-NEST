@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-// import { Cron } from '@nestjs/schedule';
+import { utils } from '@telecom/constants';
 import {
   MessageService,
   SearchConversationDto,
@@ -23,14 +23,13 @@ export class DbBackuperService {
     });
   };
 
-  // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async startBackupAndMigration(): Promise<void> {
     const now = new Date();
     //TODO: now - 120 days
     // const dateTo = new Date(now.setDate(now.getDate()));
     const dateTo = new Date();
-    dateTo.setDate(dateTo.getDate() - 1);
+    dateTo.setDate(dateTo.getDate() - utils.OLD_DAY_HISTORIC);
     // const exec = executor.exec;
     const dbProductive = process.env.MESSAGE_DB,
       host = process.env.DB_HOST,

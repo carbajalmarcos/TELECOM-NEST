@@ -7,6 +7,7 @@ import {
 } from '@telecom/message';
 import { HttpService } from '@nestjs/axios';
 import { v4 as uuidv4 } from 'uuid';
+import { ConversationDocument } from '@telecom/message/schemas/conversation.schema';
 
 @Injectable()
 export class ReceiveSmsService {
@@ -39,12 +40,12 @@ export class ReceiveSmsService {
       const searchConversationDto = new SearchConversationDto();
       searchConversationDto.numbers = conversationNumbers;
       const conversationResult =
-        await this.messageService.findOneConversationByNumbersAndOthers(
+        (await this.messageService.findOneConversationByNumbersAndOthers(
           searchConversationDto,
-        );
+        )) as ConversationDocument;
       const now = new Date();
 
-      if (!conversationResult) console.log('MO: conversation not found');
+      if (!conversationResult) return;
       if (!conversationResult.allowMO) {
         console.info(
           'conversation not allow Mo ::',
@@ -54,7 +55,7 @@ export class ReceiveSmsService {
       }
       const messageDto = new MessageDto();
       const trackId = uuidv4();
-      messageDto.conversation = conversationResult.id;
+      messageDto.conversation = conversationResult._id;
       messageDto.text = data.text;
       messageDto.origin = data.origin;
       messageDto.destination = data.destination;
@@ -64,13 +65,13 @@ export class ReceiveSmsService {
       messageDto.trackId = trackId;
       const newMessage = await this.messageService.createMessage(messageDto);
       const conversationSaved = await this.messageService.updateConversation(
-        conversationResult.id,
+        conversationResult._id,
         { ...conversationResult, updatedAt: now },
       );
       console.info(`MO message saved ::`, JSON.stringify(newMessage));
       console.info(`Conversation saved ::`, JSON.stringify(conversationSaved));
       const lastMtMessage = await this.messageService.findLastMtMessage(
-        conversationResult.id,
+        conversationResult._id,
       );
       this.callUrl(lastMtMessage.webHookUrl, messageDto);
     } catch (error) {

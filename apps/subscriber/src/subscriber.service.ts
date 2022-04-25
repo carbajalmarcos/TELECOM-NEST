@@ -12,13 +12,14 @@ import {
 import { NumberUtils } from './utils';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { rmq } from '@telecom/constants';
+import { ConversationDocument } from '@telecom/message/schemas/conversation.schema';
 
 @Injectable()
 export class SubscriberService {
   constructor(
     private readonly messageService: MessageService,
     private readonly http: HttpService,
-    private readonly numberUtils: NumberUtils, // @Inject(process.env.QUEUE) private readonly queueClient: ClientProxy, // private readonly amqpService: AMQPService,
+    private readonly numberUtils: NumberUtils,
     private readonly amqpConnection: AmqpConnection,
   ) {}
 
@@ -93,8 +94,6 @@ export class SubscriberService {
   }
 
   async sendMessage(data: mtMessageType) {
-    console.log('data ::', JSON.stringify(data));
-
     try {
       let jasminResponse;
       let jasminError;
@@ -103,10 +102,8 @@ export class SubscriberService {
         const number: string = data.allowMO
           ? await this.numberUtils.getNumberForBidirectionalFlow(data.userId)
           : await this.numberUtils.getNumberForUnidirectionalFlow();
-        console.log('sendMessage :: number :: ', number);
         // If number not found then retry
         if (!number) {
-          console.log('sendMessage :: number 2:: ', number);
           this.delayPublish(data);
           return;
         }
@@ -127,9 +124,9 @@ export class SubscriberService {
       searchConversationDto.user = new Types.ObjectId(data.userId);
       searchConversationDto.numbers = conversationNumbers;
       let conversationResult =
-        await this.messageService.findOneConversationByNumbersAndOthers(
+        (await this.messageService.findOneConversationByNumbersAndOthers(
           searchConversationDto,
-        );
+        )) as ConversationDocument;
 
       const now = new Date();
       if (!conversationResult) {
@@ -140,12 +137,12 @@ export class SubscriberService {
         conversationDto.user = new Types.ObjectId(searchConversationDto.user);
         conversationDto.company = data.company;
         conversationDto.allowMO = data.allowMO;
-        conversationResult = await this.messageService.createConversation(
+        conversationResult = (await this.messageService.createConversation(
           conversationDto,
-        );
+        )) as ConversationDocument;
       }
       const messageDto = new MessageDto();
-      messageDto.conversation = conversationResult.id;
+      messageDto.conversation = conversationResult._id;
       messageDto.text = data.text;
       messageDto.origin = data.origin;
       messageDto.destination = data.destination;
@@ -160,10 +157,9 @@ export class SubscriberService {
 
       const newMessage = await this.messageService.createMessage(messageDto);
       const conversationSaved = await this.messageService.updateConversation(
-        conversationResult.id,
+        conversationResult._id,
         { ...conversationResult, updatedAt: now },
       );
-
       console.info(`MT message saved ::`, JSON.stringify(newMessage));
       console.info(`Conversation saved ::`, JSON.stringify(conversationSaved));
     } catch (error) {

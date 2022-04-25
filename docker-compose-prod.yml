@@ -1,0 +1,188 @@
+version: "3.7"
+
+services:
+
+  #Server that receive send message request and sends message to rabbitmq
+  publisher:
+    build:
+      context: .
+      dockerfile: Dockerfile.publisher
+      target: development
+    container_name: publisher
+    environment:
+      RMQ_URL: amqp://guest:guest@rabbitmq:5672
+    tty: true
+    restart: on-failure
+    ports:
+      - "${PUBLISHER_PORT}:3000"
+    depends_on:
+      - rabbitmq
+    networks:
+      - services
+
+  #Consumers
+  subscriber-normal:
+    build:
+      context: .
+      dockerfile: Dockerfile.subscriber
+      target: development
+    container_name: subscriber-normal
+    environment:
+      QUEUE: NORMAL_FLOW
+      RMQ_URL: amqp://guest:guest@rabbitmq:5672
+      MESSAGE_DB: telecom-message
+      DB_USERNAME: username
+      DB_PASSWORD: password
+      NUMBERS_DB: telecom-numbers
+      SEND_JASMIN_PASSOWRD: 123
+      SEND_JASMIN_USERNAME: testing
+    tty: true
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - jasmin
+      - mongodb
+      # - redis-number-locker
+    networks:
+      - services
+
+  subscriber-urgent:
+    build:
+      context: .
+      dockerfile: Dockerfile.subscriber
+      target: development
+    container_name: subscriber-urgent
+    environment:
+      QUEUE: URGENT_FLOW
+      RMQ_URL: amqp://guest:guest@rabbitmq:5672
+      MESSAGE_DB: telecom-message
+      NUMBERS_DB: telecom-numbers
+      DB_USERNAME: username
+      DB_PASSWORD: password
+      SEND_JASMIN_PASSOWRD: 123
+      SEND_JASMIN_USERNAME: testing
+    tty: true
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - jasmin
+      - mongodb
+      # - redis-number-locker
+    networks:
+      - services
+
+  endpoints-utils:
+    build:
+      context: .
+      dockerfile: Dockerfile.telecom
+      target: development
+    container_name: endpoints-utils
+    ports:
+      - "${ENDPOINTS_UTILS_PORT}:3010"
+    environment:
+      MESSAGE_DB: telecom-message
+      NUMBERS_DB: telecom-numbers
+      DB_USERNAME: username
+      DB_PASSWORD: password
+    tty: true
+    depends_on:
+      - mongodb
+      - publisher
+      - rabbitmq
+    networks:
+      - services
+
+  #Service to seed pool number
+  number-pool-seeder:
+    build:
+      context: .
+      dockerfile: Dockerfile.db-data-seeder
+      target: development
+    container_name: number-pool-seeder
+    environment:
+      NUMBERS_DB: telecom-numbers
+      DB_USERNAME: username
+      DB_PASSWORD: password
+    tty: true
+    depends_on:
+      - mongodb
+    networks:
+      - services
+
+  # #Server that receive from jasmine
+  receive-sms:
+    build:
+      context: .
+      dockerfile: Dockerfile.receive-sms
+      target: development
+    container_name: receive-sms
+    ports:
+      - "${RECEIVE_SMS_PORT}:3001"
+    restart: always
+    environment:
+      MESSAGE_DB: telecom-message
+      DB_USERNAME: username
+      DB_PASSWORD: password
+    depends_on:
+      - mongodb
+    networks:
+      - services
+
+  # DBS
+  db-backuper:
+    build:
+      context: .
+      dockerfile: Dockerfile.db-backuper
+      target: development
+    container_name: db-backuper
+    environment:
+      DB_HOST: mongodb
+      MESSAGE_DB: telecom-message
+      DB_USERNAME: username
+      DB_PASSWORD: password
+      HISTORIC_DB: telecom-historic
+    tty: true
+    volumes:
+      - './backup:/usr/src/app/backup'
+    depends_on:
+      - mongodb
+    networks:
+      - services
+
+  # DB to save messages (conversations, messages)
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    restart: always
+    ports: 
+        - ${MONGO_DB_PORT}:27017
+    environment: 
+        MONGO_INITDB_ROOT_USERNAME: username
+        MONGO_INITDB_ROOT_PASSWORD: password
+        MONGO_INITDB_ROOT_DATABASE: default
+    volumes: 
+        - ./docker-entrypoint-initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+        - ./db_db:/data/db
+        
+    networks:
+      - services
+  # Queue system (receive message from publisher and it is consumed from  consumers)
+  rabbitmq:
+    container_name: rabbitmq
+    build:
+      context: .
+      dockerfile: Dockerfile.rmq
+    volumes:
+      - ./rabbitmq:/data
+    ports:
+      # AMQP PORT
+      - "5672:5672"
+      # INTERFACE (ADMIN)
+      - "15672:15672"
+    networks:
+      - services
+networks:
+  services:
+    external: false
+    name: services
