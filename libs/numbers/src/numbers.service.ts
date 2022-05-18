@@ -46,6 +46,9 @@ export class NumberService {
         {
           locked: true,
         },
+        {
+          sort: { updateAt: 1 },
+        },
       )
       .lean();
   }
@@ -69,6 +72,9 @@ export class NumberService {
         },
         {
           locked: true,
+        },
+        {
+          sort: { updateAt: 1 },
         },
       )
       .lean();
@@ -131,6 +137,9 @@ export class NumberService {
         {
           locked: true,
         },
+        {
+          sort: { updateAt: 1 },
+        },
       )
       .lean();
   }
@@ -154,6 +163,9 @@ export class NumberService {
         {
           locked: true,
         },
+        {
+          sort: { updateAt: 1 },
+        },
       )
       .lean();
   }
@@ -173,6 +185,7 @@ export class NumberService {
                 },
                 { sentCount: { $in: [0] } },
                 { locked: false },
+                { updateAt: null },
               ],
             },
             {
@@ -203,6 +216,9 @@ export class NumberService {
         },
         {
           locked: true,
+        },
+        {
+          sort: { updateAt: 1 },
         },
       )
       .lean();
@@ -248,6 +264,9 @@ export class NumberService {
         },
         {
           locked: true,
+        },
+        {
+          sort: { updateAt: 1 },
         },
       )
       .lean();
