@@ -53,7 +53,7 @@ export class AppService {
       )) as FromNumberDocument;
       // no number param, lets get number result
       if (!numberResult) {
-        //searchin unnasigned number
+        //searching unnasigned number
         numberResult =
           await this.numberService.findFromNumberByNumberAndNonAssignedWithoutNumberParam(
             quarantineNumbers.map((qnumber) => qnumber.number),

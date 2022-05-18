@@ -22,10 +22,13 @@ export class NumberUtils {
       });
       // it checks if  user has assigned number
       if (userNumberResult && userNumberResult !== null) {
+        // TODO: check if the number is removed
         const fromNumberResult = await this.numberService.findOneFromNumberById(
           userNumberResult.currentNumber,
         );
-        return fromNumberResult.number;
+        if (!fromNumberResult.removed) {
+          return fromNumberResult.number;
+        }
       }
 
       fromNumberResult =

@@ -41,6 +41,7 @@ export class NumberService {
               ],
             },
             { sentCount: 0 },
+            { removed: false },
           ],
         },
         {
@@ -68,6 +69,9 @@ export class NumberService {
             },
             { sentCount: 0 },
             { _id: { $nin: quarantineNumbers } },
+            {
+              removed: false,
+            },
           ],
         },
         {
@@ -103,19 +107,6 @@ export class NumberService {
     return await this.numberModel.findByIdAndDelete(id).lean();
   }
 
-  async findOneUserNumberById(id: string): Promise<UserNumber> {
-    return await this.userNumberModel.findById(id).exec();
-  }
-
-  async findOneUserNumber(
-    searchUserNumberDto: SearchUserNumberDto,
-  ): Promise<UserNumber> {
-    const result = await this.userNumberModel
-      .findOne(searchUserNumberDto)
-      .exec();
-    return result;
-  }
-
   async findFromNumberByNumberAndNonAssignedWithNumberParam(
     number: string,
     quarantineNumbers: Types.ObjectId[],
@@ -132,6 +123,9 @@ export class NumberService {
             },
             { number },
             { _id: { $nin: quarantineNumbers } },
+            {
+              removed: false,
+            },
           ],
         },
         {
@@ -158,6 +152,7 @@ export class NumberService {
               ],
             },
             { _id: { $nin: quarantineNumbers } },
+            { removed: false },
           ],
         },
         {
@@ -186,10 +181,12 @@ export class NumberService {
                 { sentCount: { $in: [0] } },
                 { locked: false },
                 { updateAt: null },
+                { removed: false },
               ],
             },
             {
               $and: [
+                { removed: false },
                 {
                   locked: false,
                 },
@@ -233,6 +230,7 @@ export class NumberService {
       .findOneAndUpdate(
         {
           $and: [
+            { removed: false },
             {
               $and: [
                 {
@@ -278,6 +276,19 @@ export class NumberService {
         locked: false,
       })
       .lean();
+  }
+
+  async findOneUserNumberById(id: string): Promise<UserNumber> {
+    return await this.userNumberModel.findById(id).exec();
+  }
+
+  async findOneUserNumber(
+    searchUserNumberDto: SearchUserNumberDto,
+  ): Promise<UserNumber> {
+    const result = await this.userNumberModel
+      .findOne(searchUserNumberDto)
+      .exec();
+    return result;
   }
 
   async createUserNumber(

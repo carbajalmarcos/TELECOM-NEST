@@ -5,5 +5,6 @@ export class SearchFromNumberDto {
   userAssigned?: mongoose.Types.ObjectId;
   updateAt?: Date;
   sentCount?: number;
+  removed?: boolean;
   locked?: boolean;
 }

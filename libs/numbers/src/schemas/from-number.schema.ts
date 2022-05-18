@@ -19,6 +19,9 @@ export class FromNumber {
   @Prop({ default: false })
   locked: boolean;
 
+  @Prop({ default: false })
+  removed: boolean;
+
   @Prop()
   updateAt: Date;
 }
