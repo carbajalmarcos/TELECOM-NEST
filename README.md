@@ -108,4 +108,6 @@ sh init.sh
 
 
 
+# From numbers seeder
+Edit  ``` files/numbers.csv ``` to insert/remove numbers
 
