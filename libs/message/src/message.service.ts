@@ -117,8 +117,11 @@ export class MessageService {
 
   async findLastMtMessage(conversationId: Types.ObjectId): Promise<Message> {
     return await this.messageModel
-      .findOne({ conversation: conversationId, isMO: false })
-      .sort({ createdAt: -1 })
+      .findOne(
+        { conversation: conversationId, isMO: false },
+        {},
+        { sort: { createdAt: -1 } },
+      )
       .exec();
   }
 

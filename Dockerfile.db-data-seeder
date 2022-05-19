@@ -10,4 +10,6 @@ RUN npm install
 
 COPY ./dist/apps/db-data-seeder .
 
+COPY ./files/numbers.csv .
+
 CMD ["node", "main"]

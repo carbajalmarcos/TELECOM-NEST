@@ -28,7 +28,7 @@ sh init.sh
       password: 'cero',
       priority: 'normal',
       company: 'company0',
-      defaultWebHook: 'http://company1/webhook',
+      defaultWebHook: 'http://company0/webhook',
       allowMO: true,
     },
     {
@@ -36,7 +36,7 @@ sh init.sh
       password: 'uno',
       priority: 'urgent',
       company: 'company1',
-      defaultWebHook: 'http://company2/webhook',
+      # defaultWebHook: 'http://company2/webhook',
       allowMO: true,
     },
     {

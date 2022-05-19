@@ -1,37 +1,45 @@
+import { SearchFromNumberDto } from './../../../libs/numbers/src/dto/searchFromNumber.dto';
 import { Injectable } from '@nestjs/common';
 import { NumberService } from '@telecom/numbers';
 import { utils } from '@telecom/constants';
+import { createReadStream, readFileSync } from 'fs';
+import { CsvParser } from 'nest-csv-parser';
 
+class DataEntity {
+  number: string;
+  action: string;
+}
+interface IDataEntity {
+  number: string;
+  action: string;
+}
 @Injectable()
 export class DbDataSeederService {
-  constructor(private readonly numberService: NumberService) {}
+  constructor(
+    private readonly numberService: NumberService,
+    private readonly csvParser: CsvParser,
+  ) {}
 
-  async seed() {
-    const seedersLoaded = [];
-    const date = new Date();
-    for (let i = 0; i < utils.POOL_NUMBERS_QUANTITY; i++) {
-      seedersLoaded.push(this.singleSeder(i, date));
-    }
-    await Promise.all(seedersLoaded);
+  async readFile() {
+    const path = `${__dirname}/numbers.csv`;
+    const csv = createReadStream(path);
+    const entities = await this.csvParser.parse(csv, DataEntity, null, null, {
+      separator: ',',
+    });
+    console.log('************** Csv numbers **************');
+    console.log(entities);
+    return entities;
   }
 
-  private async singleSeder(i: number, date: Date) {
-    const formattedNumber = i.toString().padStart(4, '0');
-    const numberExists = await this.numberService.findOneFromNumber({
-      number: formattedNumber,
+  async seed() {
+    const { list } = await this.readFile();
+    const searchFromNumberDto = new SearchFromNumberDto();
+    const seedersLoaded = list.map((number: IDataEntity, i) => {
+      searchFromNumberDto.number = number.number;
+      searchFromNumberDto.removed = number.action === 'remove';
+      searchFromNumberDto.updateAt = new Date();
+      return this.numberService.updateOrInsertFromNumber(searchFromNumberDto);
     });
-
-    if (!numberExists) {
-      const number = await this.numberService.createFromNumber({
-        number: formattedNumber,
-        updateAt: date,
-        sentCount: 0,
-        locked: false,
-        userAssigned: null,
-      });
-      console.info('saved  number ::', JSON.stringify(number));
-    } else {
-      console.info('number already exists :: ', JSON.stringify(numberExists));
-    }
+    await Promise.all(seedersLoaded);
   }
 }

@@ -25,7 +25,9 @@ export class NumberUtils {
         const fromNumberResult = await this.numberService.findOneFromNumberById(
           userNumberResult.currentNumber,
         );
-        return fromNumberResult.number;
+        if (!fromNumberResult.removed) {
+          return fromNumberResult.number;
+        }
       }
 
       fromNumberResult =

@@ -73,7 +73,10 @@ export class ReceiveSmsService {
       const lastMtMessage = await this.messageService.findLastMtMessage(
         conversationResult._id,
       );
-      this.callUrl(lastMtMessage.webHookUrl, messageDto);
+
+      if (lastMtMessage.webHookUrl && lastMtMessage.webHookUrl.length) {
+        this.callUrl(lastMtMessage.webHookUrl, messageDto);
+      }
     } catch (error) {
       console.info(`creating message error ::`, error);
     }

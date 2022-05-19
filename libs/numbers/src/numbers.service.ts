@@ -41,10 +41,14 @@ export class NumberService {
               ],
             },
             { sentCount: 0 },
+            { removed: false },
           ],
         },
         {
           locked: true,
+        },
+        {
+          sort: { updateAt: 1 },
         },
       )
       .lean();
@@ -65,23 +69,29 @@ export class NumberService {
             },
             { sentCount: 0 },
             { _id: { $nin: quarantineNumbers } },
+            {
+              removed: false,
+            },
           ],
         },
         {
           locked: true,
         },
+        {
+          sort: { updateAt: 1 },
+        },
       )
       .lean();
   }
 
-  async createFromNumber(
+  async updateOrInsertFromNumber(
     searchFromNumberDto: SearchFromNumberDto,
   ): Promise<FromNumber> {
-    const exists = await this.findOneFromNumber(searchFromNumberDto);
-    if (exists) return exists;
-    return await new this.numberModel({
-      ...searchFromNumberDto,
-    }).save();
+    return await this.numberModel.findOneAndUpdate(
+      { number: searchFromNumberDto.number },
+      { ...searchFromNumberDto },
+      { upsert: true, new: true },
+    );
   }
 
   async updateFromNumber(
@@ -95,19 +105,6 @@ export class NumberService {
 
   async deleteFromNumber(id: string): Promise<FromNumber> {
     return await this.numberModel.findByIdAndDelete(id).lean();
-  }
-
-  async findOneUserNumberById(id: string): Promise<UserNumber> {
-    return await this.userNumberModel.findById(id).exec();
-  }
-
-  async findOneUserNumber(
-    searchUserNumberDto: SearchUserNumberDto,
-  ): Promise<UserNumber> {
-    const result = await this.userNumberModel
-      .findOne(searchUserNumberDto)
-      .exec();
-    return result;
   }
 
   async findFromNumberByNumberAndNonAssignedWithNumberParam(
@@ -126,10 +123,16 @@ export class NumberService {
             },
             { number },
             { _id: { $nin: quarantineNumbers } },
+            {
+              removed: false,
+            },
           ],
         },
         {
           locked: true,
+        },
+        {
+          sort: { updateAt: 1 },
         },
       )
       .lean();
@@ -149,10 +152,14 @@ export class NumberService {
               ],
             },
             { _id: { $nin: quarantineNumbers } },
+            { removed: false },
           ],
         },
         {
           locked: true,
+        },
+        {
+          sort: { updateAt: 1 },
         },
       )
       .lean();
@@ -173,10 +180,13 @@ export class NumberService {
                 },
                 { sentCount: { $in: [0] } },
                 { locked: false },
+                { updateAt: null },
+                { removed: false },
               ],
             },
             {
               $and: [
+                { removed: false },
                 {
                   locked: false,
                 },
@@ -204,6 +214,9 @@ export class NumberService {
         {
           locked: true,
         },
+        {
+          sort: { updateAt: 1 },
+        },
       )
       .lean();
   }
@@ -217,6 +230,7 @@ export class NumberService {
       .findOneAndUpdate(
         {
           $and: [
+            { removed: false },
             {
               $and: [
                 {
@@ -249,6 +263,9 @@ export class NumberService {
         {
           locked: true,
         },
+        {
+          sort: { updateAt: 1 },
+        },
       )
       .lean();
   }
@@ -259,6 +276,19 @@ export class NumberService {
         locked: false,
       })
       .lean();
+  }
+
+  async findOneUserNumberById(id: string): Promise<UserNumber> {
+    return await this.userNumberModel.findById(id).exec();
+  }
+
+  async findOneUserNumber(
+    searchUserNumberDto: SearchUserNumberDto,
+  ): Promise<UserNumber> {
+    const result = await this.userNumberModel
+      .findOne(searchUserNumberDto)
+      .exec();
+    return result;
   }
 
   async createUserNumber(
