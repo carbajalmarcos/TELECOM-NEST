@@ -84,14 +84,14 @@ export class NumberService {
       .lean();
   }
 
-  async createFromNumber(
+  async updateOrInsertFromNumber(
     searchFromNumberDto: SearchFromNumberDto,
   ): Promise<FromNumber> {
-    const exists = await this.findOneFromNumber(searchFromNumberDto);
-    if (exists) return exists;
-    return await new this.numberModel({
-      ...searchFromNumberDto,
-    }).save();
+    return await this.numberModel.findOneAndUpdate(
+      { number: searchFromNumberDto.number },
+      { ...searchFromNumberDto },
+      { upsert: true, new: true },
+    );
   }
 
   async updateFromNumber(

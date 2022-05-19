@@ -13,7 +13,7 @@ export class FromNumber {
   @Prop({ isRequired: false })
   userAssigned: Types.ObjectId;
 
-  @Prop()
+  @Prop({ default: 0 })
   sentCount: number;
 
   @Prop({ default: false })

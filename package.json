@@ -38,6 +38,7 @@
     "dotenv": "^16.0.0",
     "ioredis": "^5.0.4",
     "mongoose": "^6.2.9",
+    "nest-csv-parser": "^2.0.4",
     "nestjs-command": "^3.1.1",
     "passport": "^0.5.2",
     "passport-jwt": "^4.0.0",
